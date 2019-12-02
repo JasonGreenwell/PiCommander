@@ -1,55 +1,83 @@
 import paramiko
-import time
 import threading
+import datetime
 
 
 class PiCommander:
 
-    def __init__(self, number_of_Pi):
+    def __init__(self):
+        self.now = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.stdin, self.stdout, self.stderr = (0, 0, 0)
-        self.count = number_of_Pi
         self.hosts = []
+        self.username = ''
+        self.password = ''
+        self.connection_tries = 2
 
     def connect(self, hosts=[], username='', password=''):
         self.hosts = hosts
-        for host in hosts:
-            try:
-                self.ssh.connect(hostname=host, username=username, password=password)
-            except paramiko.BadAuthenticationType as bad_auth_type:
-                # TODO: Log and do something
-                pass
-            except paramiko.AuthenticationException as authentication_exception:
-                # TODO: Log and do something
-                pass
-            except paramiko.SSHException as ssh_exception:
-                # TODO: Log and do something
-                pass
-            except TimeoutError as timeout_error:
-                # TODO: Log and do something
-                pass
-            finally:
-                # TODO: Do something regardless?  Maybe log the error
-                pass
+        self.username = username
+        self.password = password
+        for _ in self.hosts:
+            threading.Thread(target=self.__connect(_))
+
+    def __connect(self, host):
+        try:
+            self.ssh.connect(hostname=host, username=self.username, password=self.password)
+            self.log(f"INFO [{host}]: Connection Successful")
+        except paramiko.BadAuthenticationType as bad_auth_type:
+            # TODO: Log and do something
+            self.log(f"ERROR [{host}]: {bad_auth_type}")
+
+        except paramiko.AuthenticationException as authentication_exception:
+            # TODO: Log and do something
+            self.log(f"ERROR [{host}]: {authentication_exception}")
+
+        except paramiko.SSHException as ssh_exception:
+            # TODO: Log and do something
+            self.log(f"ERROR [{host}]: {ssh_exception}")
+        except paramiko.ssh_exception.NoValidConnectionsError as no_valid_connection:
+            self.log(f"ERROR [{host}]: {no_valid_connection}")
+        except TimeoutError as timeout_error:
+            # TODO: Log and do something
+            self.log(f"ERROR [{host}]: {timeout_error}")
+            for _ in range(self.connection_tries):
+                self.__connect(host)
+            self.hosts.pop(self.hosts.index(f"{host}"))
 
     def command(self, command):
-
         for host in self.hosts:
-            self.stdin, self.stdout, self.stderr = self.ssh.exec_command(command)
-            print(f"Host: {host}")
-            if self.stderr:
-                for _ in self.stderr:
-                    print(f"Command Unsuccessful: {_.strip()}")
-            elif not self.stderr:
-                print("Command Successful")
-                time.sleep(3)
+            threading.Thread(target=self.__command(command, host))
 
-            for _ in self.stdout.readlines():
+    def __command(self, command, host):
+        self.stdin, self.stdout, self.stderr = self.ssh.exec_command(command)
+        error = self.stderr.readlines()
+        if error:
+            print(f"Command {command} to host {host} unsuccessul")
+            for _ in error:
                 print(_.strip())
+        else:
+            print("*" * 20)
+            print(f"Command {command} to host {host} successful")
+            print("*"*20)
+            for _ in self.stdout.readlines():
+                print(f"{_.strip()}")
+            print("*"*20)
+
+        #print(f"Command {command} successfully sent to host {host}")
+        #print(self.stdout.readlines())
 
 
-Pi0 = PiCommander(1)
+    def log(self, text):
+        # CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+        with open('log.log', 'a') as file:
+            file.write(f"{self.now} {text}\n")
 
-Pi0.connect(['192.168.75.66', '192.168.75.67'], 'pi', 'VG30dett')
-Pi0.command('ls')
+    def main(self):
+        pass
+
+
+Pi0 = PiCommander()
+Pi0.connect(['0.0.0.0'], 'pi', 'raspberry')
+Pi0.command('sudo reboot')
