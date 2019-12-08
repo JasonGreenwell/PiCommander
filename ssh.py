@@ -1,13 +1,14 @@
 import subprocess
 import requests
 
-class ssh:
+
+class SSH:
 
 	def __init__(self, ip_address="", username="pi", password="raspberry"):
 		self.ip_address = ip_address
 		self.username = username
 		self.password = password
-		# See if putty exists.  If not, download it.
+		# See if putty exists. If not, download it.
 		try:
 			self.file = open("putty.exe")
 			self.file.close()
@@ -15,7 +16,7 @@ class ssh:
 			self.download_putty()
 
 	@staticmethod
-	def download_putty(self):
+	def download_putty():
 		file_url = "https://the.earth.li/~sgtatham/putty/latest/w64/putty.exe"
 		r = requests.get(file_url, stream=True)
 
@@ -31,5 +32,5 @@ class ssh:
 			print(e)
 
 
-myssh = ssh("192.168.75.66", password="VG30dett")
+myssh = SSH("192.168.75.66", password="raspberry")
 myssh.start()

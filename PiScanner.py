@@ -1,13 +1,20 @@
 import socket
 import sqlite3
 
+
 class PiScanner:
+
+    """
+    Returns a list of discovered devices with SSH available
+    Use Object.pi_list to
+
+    """
 
     def __init__(self):
         self.pi_list = []
 
     def scan_network(self, range_start=1, range_end=255):
-        ip_list = []
+        network_ip_list = []
         my_ip = socket.gethostbyname(socket.gethostname())
         ip_split = my_ip.split(".")
 
@@ -17,11 +24,11 @@ class PiScanner:
         if range_end > 255:
             range_end = 255
 
-        for i in range(range_start, range_end+1):
+        for i in range(range_start, range_end + 1):
             base_ip = ip_split[0] + '.' + ip_split[1] + '.' + ip_split[2] + '.' + str(i)
-            ip_list.append(base_ip)
+            network_ip_list.append(base_ip)
 
-        self.scan_by_ip(ip_list)
+        self.scan_by_ip(network_ip_list)
 
     def scan_by_hostname(self, hostnames=[]):
         for host in hostnames:

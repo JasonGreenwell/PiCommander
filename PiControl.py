@@ -2,6 +2,7 @@ import paramiko
 import datetime
 from PiScanner import PiScanner
 
+
 class PiControl:
 
     def __init__(self):
