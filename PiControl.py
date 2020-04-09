@@ -1,6 +1,7 @@
 import paramiko
 import datetime
 from PiScanner import PiScanner
+import nmap
 
 
 class PiControl:
@@ -15,11 +16,10 @@ class PiControl:
         self.password = ''
         self.connection_tries = 2
 
-    def connect(self, hosts=[], username='', password=''):
-        self.hosts = hosts
+    def connect(self, username='', password=''):
         self.username = username
         self.password = password
-        for host in hosts:
+        for host in self.hosts:
             try:
                 self.ssh.connect(hostname=host, username=self.username, password=self.password)
                 self.log(f"INFO [{host}]: Connection Successful")
@@ -54,6 +54,19 @@ class PiControl:
                 for _ in self.stdout.readlines():
                     print(f"{_.strip()}")
                 print("*" * 20)
+
+    def scan(self, net="192.168.1.0/24"):
+        nm = nmap.PortScanner()
+        nm.scan(hosts=net, arguments="-sP")
+        host_list = nm.all_hosts()
+
+        for host in host_list:
+            if 'mac' in nm[host]['addresses']:
+                mac = nm[host]['addresses']['mac']
+                if mac[:8] == "":
+                    self.hosts.append(host)
+                else:
+                    return None
 
     def log(self, text):
         # CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET

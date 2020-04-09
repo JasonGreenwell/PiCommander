@@ -18,10 +18,10 @@ class SSH:
 	@staticmethod
 	def download_putty():
 		file_url = "https://the.earth.li/~sgtatham/putty/latest/w64/putty.exe"
-		r = requests.get(file_url, stream=True)
+		download_file = requests.get(file_url, stream=True)
 
 		with open("putty.exe", "wb") as putty:
-			for chunk in r.iter_content(chunk_size=1024):
+			for chunk in download_file.iter_content(chunk_size=1024):
 				if chunk:
 					putty.write(chunk)
 
@@ -32,5 +32,5 @@ class SSH:
 			print(e)
 
 
-myssh = SSH("192.168.75.66", password="raspberry")
-myssh.start()
+myssh = SSH("192.168.75.66", password="")
+#myssh.start()
